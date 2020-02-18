@@ -10,6 +10,7 @@ macaddress.one(function (err, data) {
 	//shell.exec(cmd);
 });
 
+shell.exec("sudo ntpdate pool.ntp.org");
 const path = require('path');
 var AWS = require('aws-sdk');
 AWS.config.loadFromPath('./credentials.json');
