@@ -1,1 +1,4 @@
-# record-pi-cam-to-s3
+
+# Usage
+
+$ `node server.js`

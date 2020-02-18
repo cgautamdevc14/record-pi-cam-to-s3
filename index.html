@@ -1,0 +1,291 @@
+<!--
+// Muaz Khan     - www.MuazKhan.com
+// MIT License   - www.WebRTC-Experiment.com/licence
+// Experiments   - github.com/muaz-khan/RecordRTC
+-->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>RecordRTC to Node.js</title>
+        <script>
+
+            if (location.href.indexOf('file:') == 0) {
+                document.write('<h1 style="color:red;">Please load this HTML file on HTTP or HTTPS.</h1>');
+            }
+
+            var lastBlob = null;
+function getXMLHTTPRequest()
+{
+    var request;
+    // Lets try using ActiveX to instantiate the XMLHttpRequest object
+    try{
+        request = new ActiveXObject("Microsoft.XMLHTTP");
+    }catch(ex1){
+        try{
+            request = new ActiveXObject("Msxml2.XMLHTTP");
+        }catch(ex2){
+            request = null;
+        }
+    }
+
+    // If the previous didn't work, lets check if the browser natively support XMLHttpRequest 
+    if(!request && typeof XMLHttpRequest != "undefined"){
+        //The browser does, so lets instantiate the object
+        request = new XMLHttpRequest();
+    }
+
+    return request;
+}
+
+
+function loadFile(filename, callback)
+{
+    var aXMLHttpRequest = getXMLHTTPRequest();
+    var allData;
+
+    if (aXMLHttpRequest)
+    {
+        aXMLHttpRequest.open("GET", filename, true);
+        
+      aXMLHttpRequest.onreadystatechange = function (aEvt) {
+        if(aXMLHttpRequest.readyState == 4){
+        allData = aXMLHttpRequest.responseText;
+        callback(allData)
+        }
+      };
+      
+      //Lets fire off the request
+        aXMLHttpRequest.send(null);
+    }
+    else
+    {
+        //Oh no, the XMLHttpRequest object couldn't be instantiated.
+        alert("A problem occurred instantiating the XMLHttpRequest object.");
+    }
+}
+
+
+
+     
+
+
+
+
+
+        </script>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <link rel="author" type="text/html" href="https://plus.google.com/+MuazKhan">
+        <meta name="author" content="Muaz Khan">
+        
+        <style>
+            html { background-color: #f7f7f7; }
+
+            body {
+                background-color: white;
+                border: 1px solid rgb(15, 158, 238);
+                margin: 1% 35%;
+                text-align: center;
+            }
+
+            hr {
+                border: 0;
+                border-top: 1px solid rgb(15, 158, 238);
+            }
+
+            a {
+                color: #2844FA;
+                text-decoration: none;
+            }
+
+            a:hover, a:focus { color: #1B29A4; }
+
+            a:active { color: #000; }
+            
+            audio, video {
+                border: 1px solid rgb(15, 158, 238); width: 94%;
+                width: 100%;
+                height: 300px;
+            }
+            button[disabled], input[disabled] { background: rgba(216, 205, 205, 0.2); border: 1px solid rgb(233, 224, 224);}
+        </style>
+    </head>
+    <script>
+function start()
+{
+  document.getElementById("btn-start-recording").click();
+  setInterval('document.getElementById("btn-stop-recording").click()', duration);
+  loadFile("/getmac", function(data){
+ //   document.getElementById("thertcframe").src = "https://tejaswigowda.github.io/webrtc-broadcast/#" + data;
+  })
+}
+
+    </script>
+    <body onload='start()'>
+        <h1>RecordRTC to Node.js</h1>
+        <p>
+            <video></video> 
+            <iframe id='thertcframe'></iframe>
+        </p><hr />
+        
+        <div>
+            <label id="percentage">0%</label>
+            <progress id="progress-bar" value=0></progress><br />
+        </div>
+            
+        <hr />
+
+        <div>
+            <button id="btn-start-recording">Start Recording</button>
+            <button id="btn-stop-recording">Stop Recording</button>
+        </div>
+
+        <script src="/node_modules/recordrtc/RecordRTC.js"> </script>
+        
+        <script>
+            // fetching DOM references
+            var btnStartRecording = document.querySelector('#btn-start-recording');
+            var btnStopRecording  = document.querySelector('#btn-stop-recording');
+            
+            var videoElement      = document.querySelector('video');
+            
+            var progressBar = document.querySelector('#progress-bar');
+            var percentage = document.querySelector('#percentage');
+            
+            var duration = 1*6*1000;
+            var overlap = 2.7*1000;
+            var recorder = [0,1];
+            var current = 0;
+
+            // reusable helpers
+            
+            // this function submits recorded blob to nodejs server
+            function postFiles() {
+                var blob =  recorder[current].getBlob();
+               current = (current + 1)%2;
+
+               //     recorder[current].startRecording();
+                // getting unique identifier for the file name
+                var fileName = new Date().getTime() + '.webm';
+                
+                var file = new File([blob], fileName, {
+                    type: 'video/webm'
+                });
+
+         //       videoElement.src = '';
+         //       videoElement.poster = '/ajax-loader.gif';
+
+                xhr('/uploadFile', file, function(responseText) {
+                    var fileURL = JSON.parse(responseText).fileURL;
+
+                    console.info('fileURL', fileURL);
+                //    videoElement.src = fileURL;
+               //     videoElement.play();
+               //     videoElement.muted = false;
+
+                    document.querySelector('#footer-h2').innerHTML = '<a href="' + videoElement.src + '">' + videoElement.src + '</a>';
+                });
+                
+             //   if(mediaStream) mediaStream.stop();
+            }
+            
+            // XHR2/FormData
+            function xhr(url, data, callback) {
+                var request = new XMLHttpRequest();
+                request.onreadystatechange = function() {
+                    if (request.readyState == 4 && request.status == 200) {
+                        callback(request.responseText);
+                    }
+                };
+                        
+                request.upload.onprogress = function(event) {
+                    progressBar.max = event.total;
+                    progressBar.value = event.loaded;
+                    progressBar.innerHTML = 'Upload Progress ' + Math.round(event.loaded / event.total * 100) + "%";
+                };
+                        
+                request.upload.onload = function() {
+                    percentage.style.display = 'none';
+                    progressBar.style.display = 'none';
+                };
+                request.open('POST', url);
+
+                var formData = new FormData();
+                formData.append('file', data);
+                request.send(formData);
+            }
+
+            // generating random string
+            function generateRandomString() {
+                if (window.crypto) {
+                    var a = window.crypto.getRandomValues(new Uint32Array(3)),
+                        token = '';
+                    for (var i = 0, l = a.length; i < l; i++) token += a[i].toString(36);
+                    return token;
+                } else {
+                    return (Math.random() * new Date().getTime()).toString(36).replace( /\./g , '');
+                }
+            }
+
+            var mediaStream = null;
+            // reusable getUserMedia
+            function captureUserMedia(success_callback) {
+                var session = {
+                    audio: false,
+                    video: true
+                };
+                
+                navigator.getUserMedia(session, success_callback, function(error) {
+                    alert('Unable to capture your camera. Please check console logs.');
+                    console.error(error);
+                });
+            }
+
+            // UI events handling
+            btnStartRecording.onclick = function() {
+                
+                captureUserMedia(function(stream) {
+                    mediaStream = stream;
+                    
+                   // videoElement.src = window.URL.createObjectURL(stream);
+                    videoElement.srcObject = stream
+                    
+                    videoElement.play();
+                    videoElement.muted = true;
+                    videoElement.controls = false;
+                    
+                    recorder[current] = RecordRTC(stream, {
+                        type: 'video'
+                    });
+                    
+                    recorder[(current+1)%2] = RecordRTC(stream, {
+                        type: 'video'
+                    });
+                    
+                    recorder[current].startRecording();
+                    
+                    // enable stop-recording button
+                });
+            };
+
+
+            btnStopRecording.onclick = function() {
+               recorder[(current+1)%2].startRecording();
+ // setTimeout('document.getElementById("btn-stop-recording").click()', duration);
+              setTimeout("recorder[current].stopRecording(postFiles)", overlap);
+            };
+
+            window.onbeforeunload = function() {
+            };
+        </script>
+        <footer style="width:100%;position: fixed; right: 0; text-align: center;color:red;">
+            <h2 id="footer-h2"></h2>
+            Questions?? <a href="mailto:muazkh@gmail.com">muazkh@gmail.com</a>
+
+            <br><br>
+            Open-Sourced here:<br>
+            <a href="https://github.com/muaz-khan/RecordRTC/tree/master/RecordRTC-to-Nodejs">https://github.com/muaz-khan/RecordRTC/tree/master/RecordRTC-to-Nodejs</a>
+        </footer>
+    </body>
+</html>
