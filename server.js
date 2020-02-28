@@ -184,3 +184,15 @@ function getHeaders(opt, val) {
         return {};
     }
 }
+
+
+var SerialPort = require('serialport');var serialPort = new SerialPort('/dev/ttyACM0', {
+    baudrate: 9600
+});
+
+serialPort.on('data', function (data) {
+    console.log('Data:', data);
+});// Read data that is available but keep the stream from entering //"flowing mode"
+serialPort.on('readable', function () {
+    console.log('Data:', port.read());
+});
