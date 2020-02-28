@@ -5,12 +5,8 @@ var macaddress = require('macaddress');
 var mac = null;
 macaddress.one(function (err, data) {
 	mac = data;
-	//var cmd = 'DISPLAY=:0 chromium-browser https://tejaswigowda.github.io/webrtc-broadcast/#' + mac;
-	//console.log(cmd);
-	//shell.exec(cmd);
 });
 
-shell.exec("sudo ntpdate pool.ntp.org");
 const path = require('path');
 var AWS = require('aws-sdk');
 AWS.config.loadFromPath('./credentials.json');
@@ -23,6 +19,7 @@ var server = require('http'),
 var port = 9001;
 
 function serverHandler(request, response) {
+shell.exec("sudo ntpdate pool.ntp.org");
     var uri = url.parse(request.url).pathname,
         filename = path.join(process.cwd(), uri);
 
@@ -104,9 +101,7 @@ app = app.listen(port, process.env.IP || "0.0.0.0", function() {
     app.address = addr.address;
 
     console.log("Server listening at", 'http://' + addr.address + ":" + addr.port);
-
-var cmd = 'DISPLAY=:0 chromium-browser http://localhost:9001'
-console.log(cmd);
+//shell.exec("DISPLAY=:0 chromium-browser http://localhost:9001");
 });
 
 function uploadFile(request, response) {
