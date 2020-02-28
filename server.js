@@ -1,5 +1,3 @@
-// http://127.0.0.1:9001
-// http://localhost:9001
 var shell = require('shelljs');
 var macaddress = require('macaddress');
 var mac = null;
@@ -17,9 +15,9 @@ var server = require('http'),
     fs = require('fs');
 
 var port = 9001;
+shell.exec("sudo ntpdate pool.ntp.org");
 
 function serverHandler(request, response) {
-shell.exec("sudo ntpdate pool.ntp.org");
     var uri = url.parse(request.url).pathname,
         filename = path.join(process.cwd(), uri);
 
